@@ -1,0 +1,1 @@
+boot-$(CONFIG_BOOT_BL2)	+=bl2

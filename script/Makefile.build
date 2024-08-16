@@ -1,0 +1,71 @@
+include $(BUILD_BASE)/.config
+include script/Makefile.toolchain
+include $(WORKING_DIR)/Makefile
+
+ifneq ($(V),1)
+    Q:=@
+endif
+
+$(shell mkdir -p $(BUILD_BASE)/$(WORKING_DIR))
+$(shell mkdir -p $(OUTPUT_BASE)/libs)
+ifeq ($(IS_ENTRY),TRUE)
+    $(shell rm -f $(BUILD_BASE)/$(PROJECT_DIR)/objects.tmp.mk)
+    $(shell touch $(BUILD_BASE)/$(PROJECT_DIR)/objects.tmp.mk)
+endif
+
+ASFLAGS		+=$(asflags-y)
+CFLAGS		+=$(cflags-y)
+CPPFLAGS	+=$(cppflags-y)
+
+dir		:=$(addsuffix .dir,$(dir-y))
+app		:=$(addsuffix .app,$(app-y))
+boot	:=$(addsuffix .boot,$(boot-y))
+lib		:=$(addsuffix .lib,$(lib-y))
+obj		:=$(addprefix $(BUILD_BASE)/$(WORKING_DIR)/,$(obj-y))
+lds		:=$(addprefix $(BUILD_BASE)/$(WORKING_DIR)/,$(lds-y))
+dep		:=$(addsuffix .d,$(obj))
+dep		+=$(addsuffix .d,$(lds))
+recipe	:=$(dir) $(obj) $(lib) $(lds) $(boot) $(app)
+$(foreach var,$(obj),$(shell echo "obj += $(var)" >> $(BUILD_BASE)/$(PROJECT_DIR)/objects.tmp.mk))
+$(foreach var,$(lds),$(shell echo "lds += $(var)" >> $(BUILD_BASE)/$(PROJECT_DIR)/objects.tmp.mk))
+
+phony+=all
+all: $(recipe)
+
+%.dir:
+	@$(MAKE) -f script/Makefile.build BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) WORKING_DIR=$(WORKING_DIR)/$(basename $@) PROJECT_DIR=$(PROJECT_DIR)
+
+%.app:
+	@$(MAKE) -f script/Makefile.build BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) WORKING_DIR=$(WORKING_DIR)/$(basename $@) PROJECT_DIR=$(WORKING_DIR)/$(basename $@) IS_ENTRY=TRUE
+	@sort $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.tmp.mk > $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.mk
+	@rm -f $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.tmp.mk
+	@$(MAKE) -f script/Makefile.link BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) PROJECT_BASE=$(BUILD_BASE)/$(WORKING_DIR)/$(basename $@) TARGET=$(OUTPUT_BASE)/$(basename $@)/$(basename $@).elf
+
+%.boot:
+	@$(MAKE) -f script/Makefile.build BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) WORKING_DIR=$(WORKING_DIR)/$(basename $@) PROJECT_DIR=$(WORKING_DIR)/$(basename $@) IS_ENTRY=TRUE
+	@sort $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.tmp.mk > $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.mk
+	@rm -f $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.tmp.mk
+	@$(MAKE) -f script/Makefile.link BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) PROJECT_BASE=$(BUILD_BASE)/$(WORKING_DIR)/$(basename $@) TARGET=$(OUTPUT_BASE)/$(basename $@)/$(basename $@).elf
+
+%.lib:
+	@$(MAKE) -f script/Makefile.build BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) WORKING_DIR=$(WORKING_DIR)/$(basename $@) PROJECT_DIR=$(WORKING_DIR)/$(basename $@) IS_ENTRY=TRUE
+	@sort $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.tmp.mk > $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.mk
+	@rm -f $(BUILD_BASE)/$(WORKING_DIR)/$(basename $@)/objects.tmp.mk
+	@$(MAKE) -f script/Makefile.archive BUILD_TYPE=$(BUILD_TYPE) V=$(V) CROSS_COMPILE=$(CROSS_COMPILE) BUILD_BASE=$(BUILD_BASE) OUTPUT_BASE=$(OUTPUT_BASE) PROJECT_BASE=$(BUILD_BASE)/$(WORKING_DIR)/$(basename $@) TARGET=$(OUTPUT_BASE)/libs/lib$(basename $@).a
+	@echo "link_lib-y +=$(basename $@)" >> $(BUILD_BASE)/link_lists.mk
+
+$(BUILD_BASE)/%.o: %.S
+	@echo "[AS]        $@"
+	$(Q)$(AS) -x assembler-with-cpp $(ASFLAGS) -D__ASSEMBLER__ $(CFLAGS) -Iinclude -I$(basename $<) -Wp,-MD,$@.d -MT $@ -MP -c $< -o $@
+
+$(BUILD_BASE)/%.o: %.c
+	@echo "[CC]        $@"
+	$(Q)$(CC) $(CFLAGS) -Iinclude -I$(basename $<) -Wp,-MD,$@.d -MT $@ -MP -c $< -o $@
+
+$(BUILD_BASE)/%.lds: %.lds.S
+	@echo "[PP]        $@"
+	$(Q)$(CPP) -P -x assembler-with-cpp -D__LINKER__ $(CPPFLAGS) -Iinclude -I$(basename $<) -Wp,-MD,$@.d -MT $@ -MP -o $@ $<
+
+.PHONY: $(phony)
+
+-include $(dep)
