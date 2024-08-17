@@ -1,7 +1,7 @@
 {
     "configurations": [
         {
-            "name": "Linux",
+            "name": "Linux-aarch64",
             "includePath": [
                 "${workspaceFolder}/**"
             ],
@@ -9,6 +9,17 @@
             "compilerPath": "/opt/aarch64-none-linux-gnu/bin/aarch64-none-linux-gnu-gcc",
             "cStandard": "c99",
             "intelliSenseMode": "gcc-arm64",
+            "compileCommands": "${workspaceFolder}/build/compile_commands.json"
+        },
+        {
+            "name": "Linux-Host",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/bin/gcc",
+            "cStandard": "gnu99",
+            "intelliSenseMode": "gcc-x64",
             "compileCommands": "${workspaceFolder}/build/compile_commands.json"
         }
     ],

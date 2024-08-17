@@ -50,7 +50,7 @@ gen_compiledb:
 		exit 1; \
 	fi
 	@echo "generating 'compile_commands.json'..."
-	@$(MAKE) --always-make --dry-run | grep -wE 'gcc|g\+\+|armclang' | grep -w '\-c' | jq -nR '[inputs|{directory:".", command:., file: match(" [^ ]+$$").string[1:]}]' > $(BUILD_BASE)/compile_commands.json
+	@$(MAKE) --always-make --dry-run | grep -wE 'gcc|g\+\+|armclang' | grep -w '\-c' | jq -nR '[inputs|{directory:".", command:., file: (match(" \\S+\\.c(pp)?").string | select(length > 0))}]' > $(BUILD_BASE)/compile_commands.json
 	@echo "done!"
 
 phony+=run

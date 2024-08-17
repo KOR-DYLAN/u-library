@@ -1,1 +1,2 @@
 lib-$(CONFIG_LIBRARY_AARCH64)	+=aarch64
+lib-$(CONFIG_LIBRARY_ZIP)		+=zip
