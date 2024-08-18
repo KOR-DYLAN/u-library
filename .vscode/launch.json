@@ -45,6 +45,11 @@
                     "description": "Set Disassembly Flavor to Intel",
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
+                },
+                {
+                    "description": "Set Output Radix to 16",
+                    "text": "-gdb-set output-radix 16",
+                    "ignoreFailures": true
                 }
             ]
         }

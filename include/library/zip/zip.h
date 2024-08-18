@@ -15,8 +15,12 @@
 typedef enum {
     ZIP_OK,
     ZIP_FAIL,
-    ZIP_FAIL_MEMORY_ALLOC,
-    ZIP_NOT_SUPPORTED,
+    ZIP_ERROR_MEMORY_ALLOC,
+    ZIP_ERROR_STREAM_OPEN,
+    ZIP_ERROR_READ,
+    ZIP_ERROR_SEEK,
+    ZIP_ERROR_BAD_SIGNATURE,
+    ZIP_ERROR_NOT_SUPPORTED,
 } zip_result_t;
 
 typedef struct {

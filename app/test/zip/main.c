@@ -71,7 +71,7 @@ static zip_result_t test_zip_seek(uintptr_t stream, int32_t offset, int32_t orig
         result = ZIP_OK;
     }
     else {
-        result = ZIP_FAIL;
+        result = ZIP_ERROR_SEEK;
     }
 
     return result;
@@ -85,7 +85,7 @@ static zip_result_t test_zip_read(uintptr_t stream, uint8_t *buf, int32_t len)
         result = ZIP_OK;
     }
     else {
-        result = ZIP_FAIL;
+        result = ZIP_ERROR_READ;
     }
 
     return result;

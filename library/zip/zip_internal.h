@@ -7,8 +7,6 @@
 #define ZIP_CDFH_SIGNATURE          (0x02014b50)
 #define ZIP_LF_SIGNATURE            (0x04034b50)
 
-#define ZIP_OFFSETOF(TYPE, MEMBER)  ((uintptr_t)&((TYPE *)0)->MEMBER)
-
 /* End of central directory record (EOCD) */
 typedef struct {
     uint32_t signature;         /* End of central directory signature = 0x06054b50 */
@@ -74,6 +72,35 @@ struct zip_structure {
     zip_lf_t *lf;
 };
 
-typedef zip_result_t(*zip_search_entry)(zip_t *handle);
+typedef zip_result_t(*zip_iterator_entry)(zip_t *handle);
+
+extern zip_result_t zip_search_eocd(zip_t *handle);
+extern zip_result_t zip_search_cdfh(zip_t *handle);
+extern zip_result_t zip_search_lf(zip_t *handle);
+
+static inline uintptr_t zip_open(zip_t *handle, uintptr_t end_point) {
+    return handle->ops.zip_open(end_point);
+}
+static inline void zip_close(zip_t *handle, uintptr_t stream) {
+    return handle->ops.zip_close(stream);
+}
+static inline int32_t zip_tell(zip_t *handle, uintptr_t stream) {
+    return handle->ops.zip_tell(stream);
+}
+static inline zip_result_t zip_seek(zip_t *handle, uintptr_t stream, int32_t offset, int32_t origin) {
+    return handle->ops.zip_seek(stream, offset, origin);
+}
+static inline zip_result_t zip_read(zip_t *handle, uintptr_t stream, uint8_t *buf, int32_t len) {
+    return handle->ops.zip_read(stream, buf, len);
+}
+static inline uintptr_t zip_malloc(zip_t *handle, size_t size) {
+    return handle->ops.zip_malloc(size);
+}
+static inline uintptr_t zip_calloc(zip_t *handle, size_t count, size_t size) {
+    return handle->ops.zip_calloc(count, size);
+}
+static inline void zip_free(zip_t *handle, uintptr_t addr) {
+    handle->ops.zip_free(addr);
+}
 
 #endif  //!__ZIP_INTERNAL__H__
